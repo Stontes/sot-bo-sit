@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idle PvP Strategy</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #121212; color: #ffffff; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 420px; background: #1e1e1e; padding: 20px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2, h3 { text-align: center; color: #4CAF50; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 14px; color: #aaa; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 15px; }
+        button { width: 100%; padding: 12px; background: #4CAF50; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 8px; }
+        button:active { transform: scale(0.98); }
+        .btn-danger { background: #e53935; }
+        .btn-trade { background: #2196F3; font-size: 13px; padding: 6px 10px; width: auto; margin: 0; }
+        .hidden { display: none; }
+        .grid-resources { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .res-card { background: #2a2a2a; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .info-card { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ЭКРАН 1: РЕГИСТРАЦИЯ -->
+    <div id="registration-screen">
+        <h2>Новое Предприятие</h2>
+        <div class="form-group">
+            <label>Название компании:</label>
+            <input type="text" id="company-name" placeholder="Например: ПромСвязь">
+        </div>
+        <div class="form-group">
+            <label>Основная специализация (производство):</label>
+            <select id="resource-type">
+                <option value="bricks">🧱 Кирпичи</option>
+                <option value="food">🍞 Еда</option>
+                <option value="medicine">🧪 Медицина</option>
+                <option value="education">📚 Образование</option>
+                <option value="communications">📡 Связь</option>
+            </select>
+        </div>
+        <button onclick="registerCompany()">Основать компанию</button>
+    </div>
+
+    <!-- ЭКРАН 2: ГЛАВНАЯ БАЗА -->
+    <div id="game-screen" class="hidden">
+        <h2 id="display-company-name">Компания</h2>
+        
+        <div class="info-card">
+            <div>🏬 База Ур.: <b id="base-level">1</b></div>
+            <div>👨‍🏭 Штат: <b id="workers-count">0</b> / <span id="max-workers">2</span></div>
+            <div>💼 Мой Босс: <span id="boss-status" style="color: #aaa;">Свободен</span></div>
+        </div>
+
+        <h3>Ваши Ресурсы</h3>
+        <div class="grid-resources">
+            <div class="res-card"><span>💰 Деньги:</span> <b id="res-money">0</b></div>
+            <div class="res-card"><span>🧱 Кирпичи:</span> <b id="res-bricks">0</b></div>
+            <div class="res-card"><span>🍞 Еда:</span> <b id="res-food">0</b></div>
+            <div class="res-card"><span>🧪 Медицина:</span> <b id="res-medicine">0</b></div>
+            <div class="res-card"><span>📚 Обучение:</span> <b id="res-education">0</b></div>
+            <div class="res-card"><span>📡 Связь:</span> <b id="res-communications">0</b></div>
+        </div>
+
+        <h3>Быстрый Обмен Системе (3 к 1)</h3>
+        <div class="info-card">
+            <p style="font-size: 12px; color: #aaa; margin-top: 0;">Обменяйте 3 единицы любого ресурса на 1 Деньгу</p>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <select id="trade-resource-select">
+                    <option value="bricks">🧱 Кирпичи</option>
+                    <option value="food">🍞 Еда</option>
+                    <option value="medicine">🧪 Медицина</option>
+                    <option value="education">📚 Образование</option>
+                    <option value="communications">📡 Связь</option>
+                </select>
+                <button class="btn-trade" onclick="exchangeResource()">Сдать 3к1</button>
+            </div>
+        </div>
+
+        <!-- Кнопка добавления теста ресурсов -->
+        <button onclick="addTestResources()" style="background: #ff9800; margin-bottom: 10px;">+10 всех ресурсов (Тест)</button>
+        <button class="btn-danger" onclick="resetData()">Сбросить прогресс</button>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
+
+    // Полное состояние игры
+    let gameState = {
+        registered: false,
+        companyName: '',
+        primaryResource: 'bricks',
+        baseLevel: 1,
+        boss: null, // Имя игрока, который нанял тебя
+        resources: {
+            money: 50, // Стартовые деньги
+            bricks: 0,
+            food: 0,
+            medicine: 0,
+            education: 0,
+            communications: 0
+        },
+        workers: []
+    };
+
+    const resNames = {
+        bricks: '🧱 Кирпичи',
+        food: '🍞 Еда',
+        medicine: '🧪 Медицина',
+        education: '📚 Образование',
+        communications: '📡 Связь',
+        money: '💰 Деньги'
+    };
+
+    function loadGame() {
+        const saved = localStorage.getItem('my_pvp_idle_game');
+        if (saved) {
+            gameState = JSON.parse(saved);
+            if (gameState.registered) {
+                showGameScreen();
+            }
+        }
+    }
+
+    function saveGame() {
+        localStorage.setItem('my_pvp_idle_game', JSON.stringify(gameState));
+    }
+
+    function registerCompany() {
+        const nameInput = document.getElementById('company-name').value.trim();
+        const resourceSelect = document.getElementById('resource-type').value;
+
+        if (!nameInput) {
+            alert('Введите название компании!');
+            return;
+        }
+
+        gameState.companyName = nameInput;
+        gameState.primaryResource = resourceSelect;
+        gameState.registered = true;
+
+        saveGame();
+        showGameScreen();
+    }
+
+    function showGameScreen() {
+        document.getElementById('registration-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+
+        document.getElementById('display-company-name').innerText = gameState.companyName;
+        document.getElementById('base-level').innerText = gameState.baseLevel;
+        document.getElementById('max-workers').innerText = gameState.baseLevel * 2;
+        document.getElementById('workers-count').innerText = gameState.workers.length;
+        document.getElementById('boss-status').innerText = gameState.boss ? gameState.boss : 'Нет (Свободен)';
+
+        updateResourcesUI();
+    }
+
+    function updateResourcesUI() {
+        document.getElementById('res-money').innerText = gameState.resources.money;
+        document.getElementById('res-bricks').innerText = gameState.resources.bricks;
+        document.getElementById('res-food').innerText = gameState.resources.food;
+        document.getElementById('res-medicine').innerText = gameState.resources.medicine;
+        document.getElementById('res-education').innerText = gameState.resources.education;
+        document.getElementById('res-communications').innerText = gameState.resources.communications;
+    }
+
+    // Механика обмена 3 к 1
+    function exchangeResource() {
+        const resKey = document.getElementById('trade-resource-select').value;
+        
+        if (gameState.resources[resKey] >= 3) {
+            gameState.resources[resKey] -= 3;
+            gameState.resources.money += 1;
+            saveGame();
+            updateResourcesUI();
+        } else {
+            alert(`Недостаточно ресурса! Нужно минимум 3 ед. ${resNames[resKey]}`);
+        }
+    }
+
+    // ТЕСТ: Добавить ресурсы для проверки
+    function addTestResources() {
+        gameState.resources.bricks += 10;
+        gameState.resources.food += 10;
+        gameState.resources.medicine += 10;
+        gameState.resources.education += 10;
+        gameState.resources.communications += 10;
+        saveGame();
+        updateResourcesUI();
+    }
+
+    function resetData() {
+        localStorage.removeItem('my_pvp_idle_game');
+        location.reload();
+    }
+
+    loadGame();
+</script>
+
+</body>
+</html>
