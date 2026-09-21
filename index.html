@@ -12,8 +12,7 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; }
         body { background-color: #121212; color: #ffffff; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Главный контейнер с прокруткой */
-        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 75px; }
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
         
         h2, h3 { text-align: center; color: #4CAF50; margin-top: 0; margin-bottom: 12px; }
         .form-group { margin-bottom: 15px; }
@@ -28,28 +27,41 @@
         .btn-med { background: #9C27B0; }
         .hidden { display: none !important; }
 
-        /* Элементы интерфеса */
+        /* Карточки и Ресурсы */
         .grid-resources { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .res-card { background: #2a2a2a; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; border: 1px solid #333; }
+        .res-card { background: #2a2a2a; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-align: center; font-size: 13px; border: 1px solid #333; }
         .info-card { background: #1e1e1e; padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #4CAF50; font-size: 14px; }
         
-        /* Карточки рабочих */
-        .worker-card { background: #1e1e1e; border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #333; }
-        .worker-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
-        .hp-bar-bg { background: #333; height: 8px; border-radius: 4px; overflow: hidden; margin: 6px 0 10px 0; }
+        /* Квадратики рабочих на главной */
+        .workers-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .worker-square { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 10px; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; height: 95px; transition: border-color 0.2s; }
+        .worker-square:active { border-color: #4CAF50; background: #252525; }
+        
+        .worker-top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 12px; }
+        .worker-shield { font-size: 14px; }
+        .worker-lvl { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #4CAF50; }
+        .worker-name { font-size: 13px; font-weight: bold; margin-top: 4px; text-align: center; }
+        
+        .worker-bottom-bar { width: 100%; }
+        .hp-text { font-size: 10px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .hp-bar-bg { background: #333; height: 6px; border-radius: 3px; overflow: hidden; width: 100%; }
         .hp-bar-fill { background: #4CAF50; height: 100%; width: 100%; transition: width 0.3s; }
-        .worker-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        /* Верхние подвкладки для Топа */
+        /* Переключатели подвкладок */
         .sub-nav { display: flex; background: #1e1e1e; border-radius: 8px; padding: 4px; margin-bottom: 15px; gap: 4px; border: 1px solid #333; }
-        .sub-tab-btn { flex: 1; padding: 8px; text-align: center; font-size: 12px; background: transparent; color: #aaa; border-radius: 6px; }
+        .sub-tab-btn { flex: 1; padding: 8px; text-align: center; font-size: 12px; background: transparent; color: #aaa; border-radius: 6px; cursor: pointer; }
         .sub-tab-btn.active { background: #4CAF50; color: #fff; font-weight: bold; }
 
-        /* Нижнее навигационное меню */
+        /* Нижнее меню */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #1e1e1e; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #777; font-size: 10px; width: 20%; height: 100%; cursor: pointer; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #777; font-size: 10px; width: 25%; height: 100%; cursor: pointer; }
         .nav-item .icon { font-size: 18px; margin-bottom: 2px; }
         .nav-item.active { color: #4CAF50; font-weight: bold; }
+
+        /* Модальное окно действий с рабочим */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal-card { background: #1e1e1e; border-radius: 12px; width: 100%; max-width: 360px; padding: 20px; border: 1px solid #4CAF50; }
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -74,7 +86,7 @@
     <button onclick="registerCompany()">Основать компанию</button>
 </div>
 
-<!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ С ВКЛАДКАМИ -->
+<!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
 <div id="app-screen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
     
     <div class="content-area">
@@ -83,9 +95,9 @@
         <section id="tab-top" class="tab-content hidden">
             <h3>Лидеры и Цели</h3>
             <div class="sub-nav">
-                <div class="sub-tab-btn active" onclick="switchSubTab('top-rating')">🏆 Рейтинг</div>
-                <div class="sub-tab-btn" onclick="switchSubTab('top-targets')">🥷 Цели PvP</div>
-                <div class="sub-tab-btn" onclick="switchSubTab('top-bosses')">💼 Боссы</div>
+                <div class="sub-tab-btn active" onclick="switchSubTab('top-rating', this)">🏆 Рейтинг</div>
+                <div class="sub-tab-btn" onclick="switchSubTab('top-targets', this)">🥷 Цели PvP</div>
+                <div class="sub-tab-btn" onclick="switchSubTab('top-bosses', this)">💼 Боссы</div>
             </div>
 
             <div id="top-rating" class="sub-tab-content">
@@ -137,46 +149,55 @@
                 <div class="res-card"><span>📚 Обучение:</span> <b id="res-education">0</b></div>
                 <div class="res-card"><span>📡 Связь:</span> <b id="res-communications">0</b></div>
             </div>
+
+            <!-- БЛОК РАБОЧИХ ПРЯМО НА ГЛАВНОЙ -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+                <h3 style="margin:0;">Штат Рабочих</h3>
+                <button class="btn-small" onclick="hireWorker()" style="background:#2E7D32;">➕ Нанять (50 💰)</button>
+            </div>
+            <div id="workers-squares-grid" class="workers-grid"></div>
         </section>
 
-        <!-- ВКЛАДКА 3: НАЙМ РАБОЧИХ -->
-        <section id="tab-workers" class="tab-content hidden">
-            <h3>Управление Штатом</h3>
-            <button onclick="hireWorker()" style="margin-bottom: 15px; background: #2E7D32;">
-                ➕ Нанять рабочего (50 💰)
-            </button>
-            <div id="workers-list"></div>
-        </section>
-
-        <!-- ВКЛАДКА 4: РЫНОК -->
+        <!-- ВКЛАДКА 3: РЫНОК -->
         <section id="tab-market" class="tab-content hidden">
-            <h3>Торговля и Обмен</h3>
-            <div class="info-card">
-                <b>Быстрый обмен в Системе (3 к 1)</b>
-                <p style="font-size: 12px; color: #aaa; margin: 4px 0 10px 0;">3 единицы любого ресурса = 1 💰 Деньга</p>
-                <div style="display: flex; gap: 8px;">
-                    <select id="trade-resource-select">
-                        <option value="bricks">🧱 Кирпичи</option>
-                        <option value="food">🍞 Еда</option>
-                        <option value="medicine">🧪 Медицина</option>
-                        <option value="education">📚 Образование</option>
-                        <option value="communications">📡 Связь</option>
-                    </select>
-                    <button class="btn-small btn-action" onclick="exchangeResource()">Сдать</button>
+            <h3>Рынок и Торговля</h3>
+            
+            <div class="sub-nav">
+                <div class="sub-tab-btn active" onclick="switchMarketSubTab('market-system', this)">⚖️ Обмен 3 к 1</div>
+                <div class="sub-tab-btn" onclick="switchMarketSubTab('market-p2p', this)">🏪 Торговля с игроками</div>
+            </div>
+
+            <div id="market-system" class="market-sub-content">
+                <div class="info-card">
+                    <b>Быстрый обмен в Системе</b>
+                    <p style="font-size: 12px; color: #aaa; margin: 4px 0 10px 0;">Обменяйте 3 единицы любого ресурса на 1 💰 Деньгу</p>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="trade-resource-select">
+                            <option value="bricks">🧱 Кирпичи</option>
+                            <option value="food">🍞 Еда</option>
+                            <option value="medicine">🧪 Медицина</option>
+                            <option value="education">📚 Образование</option>
+                            <option value="communications">📡 Связь</option>
+                        </select>
+                        <button class="btn-small btn-action" onclick="exchangeResource()">Сдать</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="info-card" style="border-left-color: #ff9800;">
-                <b>🏪 P2P Рынок Игроков</b>
-                <p style="font-size:12px; color:#aaa; margin-top:5px;">Покупка и продажа ресурсов напрямую между игроками (В разработке).</p>
+            <div id="market-p2p" class="market-sub-content hidden">
+                <div class="info-card" style="border-left-color: #ff9800;">
+                    <b>🏪 P2P Торговая Биржа</b>
+                    <p style="font-size:12px; color:#aaa; margin-top:5px;">Покупайте ресурсы у других игроков или выставляйте свои излишки на продажу.</p>
+                </div>
+                <p style="color:#aaa; text-align:center; font-size:13px; margin-top:20px;">Лоты игроков загружаются...</p>
             </div>
         </section>
 
-        <!-- ВКЛАДКА 5: НАСТРОЙКИ -->
+        <!-- ВКЛАДКА 4: НАСТРОЙКИ -->
         <section id="tab-settings" class="tab-content hidden">
             <h3>Настройки</h3>
             <div class="info-card">
-                <div>Версия: <b>1.0.3</b></div>
+                <div>Версия: <b>1.0.4</b></div>
                 <div>ID Игрока: <b id="player-id">Telegram User</b></div>
             </div>
 
@@ -196,10 +217,6 @@
             <div class="icon">🏬</div>
             <div>База</div>
         </div>
-        <div class="nav-item" onclick="switchMainTab('tab-workers', this)">
-            <div class="icon">👨‍🏭</div>
-            <div>Рабочие</div>
-        </div>
         <div class="nav-item" onclick="switchMainTab('tab-market', this)">
             <div class="icon">🏪</div>
             <div>Рынок</div>
@@ -210,6 +227,21 @@
         </div>
     </nav>
 
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ДЕЙСТВИЙ С РАБОЧИМ -->
+<div id="worker-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h3 id="modal-worker-title" style="margin-bottom:5px;">Рабочий #1</h3>
+        <p id="modal-worker-status" style="font-size:12px; text-align:center; color:#aaa; margin-top:0; margin-bottom:15px;"></p>
+        
+        <div class="modal-actions">
+            <button id="btn-feed" class="btn-action" onclick="feedSelectedWorker()">🍞 Покормить (-1 Еда) [+20 HP]</button>
+            <button id="btn-cure" class="btn-med" onclick="cureSelectedWorker()">🧪 Дать Медикаменты (-1 Мед) [Защита]</button>
+            <button id="btn-upgrade" onclick="upgradeSelectedWorker()">⬆️ Повысить уровень (<span id="modal-upgrade-cost">30</span> 💰)</button>
+            <button class="btn-danger" onclick="closeWorkerModal()" style="margin-top:10px;">Закрыть</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -226,12 +258,13 @@
         workers: []
     };
 
+    let selectedWorkerId = null;
+
     const resNames = {
         bricks: '🧱 Кирпичи', food: '🍞 Еда', medicine: '🧪 Медицина',
         education: '📚 Образование', communications: '📡 Связь', money: '💰 Деньги'
     };
 
-    // ПЕРЕКЛЮЧЕНИЕ ГЛАВНЫХ ВКЛАДОК
     function switchMainTab(tabId, el) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -240,13 +273,20 @@
         el.classList.add('active');
     }
 
-    // ПЕРЕКЛЮЧЕНИЕ ПОДВКЛАДОК В ТОПЕ
-    function switchSubTab(subTabId) {
+    function switchSubTab(subTabId, el) {
         document.querySelectorAll('.sub-tab-content').forEach(st => st.classList.add('hidden'));
-        document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+        el.parentElement.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
         
         document.getElementById(subTabId).classList.remove('hidden');
-        event.target.classList.add('active');
+        el.classList.add('active');
+    }
+
+    function switchMarketSubTab(subTabId, el) {
+        document.querySelectorAll('.market-sub-content').forEach(mc => mc.classList.add('hidden'));
+        el.parentElement.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(subTabId).classList.remove('hidden');
+        el.classList.add('active');
     }
 
     function loadGame() {
@@ -336,55 +376,85 @@
         renderWorkers();
     }
 
+    /* РЕНДЕР КВАДРАТИКОВ РАБОЧИХ */
     function renderWorkers() {
-        const container = document.getElementById('workers-list');
+        const container = document.getElementById('workers-squares-grid');
         container.innerHTML = '';
 
         if (gameState.workers.length === 0) {
-            container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px;">У вас пока нет рабочих</p>';
+            container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:12px; grid-column: span 2;">У вас пока нет рабочих. Нажмите «+ Нанять»</p>';
             return;
         }
 
-        gameState.workers.forEach(worker => {
-            const upgradeCost = worker.level * 30;
-            const card = document.createElement('div');
-            card.className = 'worker-card';
-            card.innerHTML = `
-                <div class="worker-header">
-                    <span>${worker.name} (Ур. ${worker.level})</span>
-                    <span>${worker.isProtected ? '🛡️ Защищен' : '💔 ' + worker.hp + '/100 HP'}</span>
+        gameState.workers.forEach(w => {
+            const sq = document.createElement('div');
+            sq.className = 'worker-square';
+            sq.onclick = () => openWorkerModal(w.id);
+
+            sq.innerHTML = `
+                <div class="worker-top-bar">
+                    <span class="worker-shield">${w.isProtected ? '🛡️' : ''}</span>
+                    <span class="worker-lvl">Ур. ${w.level}</span>
                 </div>
-                ${!worker.isProtected ? `
-                    <div class="hp-bar-bg">
-                        <div class="hp-bar-fill" style="width: ${worker.hp}%;"></div>
+                <div class="worker-name">👨‍🏭 ${w.name}</div>
+                <div class="worker-bottom-bar">
+                    <div class="hp-text">
+                        <span>HP</span>
+                        <span>${w.isProtected ? 'MAX' : w.hp + '/100'}</span>
                     </div>
-                ` : '<div style="font-size:11px; color:#4CAF50; margin-bottom:8px;">Иммунитет к потере HP и краже</div>'}
-                
-                <div class="worker-actions">
-                    ${!worker.isProtected ? `<button class="btn-small btn-action" onclick="feedWorker(${worker.id})">🍞 Покормить (-1 Еда)</button>` : ''}
-                    ${!worker.isProtected ? `<button class="btn-small btn-med" onclick="cureWorker(${worker.id})">🧪 Медицина (-1 Мед)</button>` : ''}
-                    <button class="btn-small" onclick="upgradeWorker(${worker.id})">⬆️ Апгрейд (${upgradeCost} 💰)</button>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-fill" style="width: ${w.isProtected ? 100 : w.hp}%; background: ${w.isProtected ? '#9C27B0' : '#4CAF50'};"></div>
+                    </div>
                 </div>
             `;
-            container.appendChild(card);
+            container.appendChild(sq);
         });
     }
 
-    function feedWorker(id) {
-        if (gameState.resources.food < 1) return alert('Нет еды!');
+    /* МОДАЛЬНОЕ ОКНО */
+    function openWorkerModal(id) {
+        selectedWorkerId = id;
         const w = gameState.workers.find(item => item.id === id);
+        if (!w) return;
+
+        document.getElementById('modal-worker-title').innerText = `${w.name} (Ур. ${w.level})`;
+        document.getElementById('modal-worker-status').innerText = w.isProtected 
+            ? '🛡️ Находится под полной защитой (HP не тратится, нельзя украсть)' 
+            : `💔 Состояние HP: ${w.hp}/100`;
+
+        document.getElementById('modal-upgrade-cost').innerText = w.level * 30;
+
+        document.getElementById('btn-feed').style.display = w.isProtected ? 'none' : 'block';
+        document.getElementById('btn-cure').style.display = w.isProtected ? 'none' : 'block';
+
+        document.getElementById('worker-modal').classList.remove('hidden');
+    }
+
+    function closeWorkerModal() {
+        document.getElementById('worker-modal').classList.add('hidden');
+        selectedWorkerId = null;
+    }
+
+    function feedSelectedWorker() {
+        if (!selectedWorkerId) return;
+        if (gameState.resources.food < 1) return alert('Нет еды!');
+        
+        const w = gameState.workers.find(item => item.id === selectedWorkerId);
         if (w) {
             gameState.resources.food -= 1;
             w.hp = Math.min(100, w.hp + 20);
             saveGame();
             updateResourcesUI();
             renderWorkers();
+            openWorkerModal(w.id);
         }
     }
 
-    function cureWorker(id) {
+    function cureSelectedWorker() {
+        if (!selectedWorkerId) return;
         if (gameState.resources.medicine < 1) return alert('Нет медицины!');
-        const w = gameState.workers.find(item => item.id === id);
+        
+        const w = gameState.workers.find(item => item.id === selectedWorkerId);
         if (w) {
             gameState.resources.medicine -= 1;
             w.isProtected = true;
@@ -392,12 +462,15 @@
             saveGame();
             updateResourcesUI();
             renderWorkers();
+            openWorkerModal(w.id);
         }
     }
 
-    function upgradeWorker(id) {
-        const w = gameState.workers.find(item => item.id === id);
+    function upgradeSelectedWorker() {
+        if (!selectedWorkerId) return;
+        const w = gameState.workers.find(item => item.id === selectedWorkerId);
         if (!w) return;
+        
         const cost = w.level * 30;
         if (gameState.resources.money < cost) return alert(`Нужно ${cost} 💰.`);
 
@@ -406,6 +479,7 @@
         saveGame();
         updateResourcesUI();
         renderWorkers();
+        openWorkerModal(w.id);
     }
 
     function exchangeResource() {
@@ -444,6 +518,7 @@
                     if (w.hp <= 0) {
                         alert(`${w.name} погиб от истощения!`);
                         gameState.workers.splice(index, 1);
+                        closeWorkerModal();
                     }
                 }
             });
