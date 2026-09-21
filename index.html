@@ -9,18 +9,27 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         body { background-color: #121212; color: #ffffff; margin: 0; padding: 15px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 420px; background: #1e1e1e; padding: 20px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2, h3 { text-align: center; color: #4CAF50; margin-top: 0; }
+        h2, h3 { text-align: center; color: #4CAF50; margin-top: 0; margin-bottom: 12px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-size: 14px; color: #aaa; }
         input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 15px; }
-        button { width: 100%; padding: 12px; background: #4CAF50; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 8px; }
+        button { width: 100%; padding: 10px 14px; background: #4CAF50; border: none; color: white; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 6px; }
         button:active { transform: scale(0.98); }
         .btn-danger { background: #e53935; }
-        .btn-trade { background: #2196F3; font-size: 13px; padding: 6px 10px; width: auto; margin: 0; }
+        .btn-small { padding: 6px 10px; font-size: 12px; width: auto; margin: 0; }
+        .btn-action { background: #2196F3; }
+        .btn-med { background: #9C27B0; }
         .hidden { display: none; }
-        .grid-resources { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .res-card { background: #2a2a2a; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-        .info-card { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50; }
+        .grid-resources { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .res-card { background: #2a2a2a; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .info-card { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50; font-size: 14px; }
+        
+        /* Карточки рабочих */
+        .worker-card { background: #2a2a2a; border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #333; }
+        .worker-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+        .hp-bar-bg { background: #444; height: 8px; border-radius: 4px; overflow: hidden; margin: 6px 0 10px 0; }
+        .hp-bar-fill { background: #4CAF50; height: 100%; width: 100%; transition: width 0.3s; }
+        .worker-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -66,10 +75,18 @@
             <div class="res-card"><span>📡 Связь:</span> <b id="res-communications">0</b></div>
         </div>
 
-        <h3>Быстрый Обмен Системе (3 к 1)</h3>
+        <!-- РАЗДЕЛ РАБОЧИХ -->
+        <h3>Штат Рабочих</h3>
+        <button onclick="hireWorker()" style="margin-bottom: 15px; background: #2E7D32;">
+            ➕ Нанять рабочего (50 💰)
+        </button>
+        <div id="workers-list"></div>
+
+        <!-- ОБМЕН РЕСУРСОВ -->
+        <h3>Обмен 3 к 1</h3>
         <div class="info-card">
-            <p style="font-size: 12px; color: #aaa; margin-top: 0;">Обменяйте 3 единицы любого ресурса на 1 Деньгу</p>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <p style="font-size: 12px; color: #aaa; margin-top: 0; margin-bottom: 8px;">3 ед. ресурса = 1 💰 Деньга</p>
+            <div style="display: flex; gap: 8px;">
                 <select id="trade-resource-select">
                     <option value="bricks">🧱 Кирпичи</option>
                     <option value="food">🍞 Еда</option>
@@ -77,11 +94,11 @@
                     <option value="education">📚 Образование</option>
                     <option value="communications">📡 Связь</option>
                 </select>
-                <button class="btn-trade" onclick="exchangeResource()">Сдать 3к1</button>
+                <button class="btn-small btn-action" onclick="exchangeResource()">Сдать</button>
             </div>
         </div>
 
-        <!-- Кнопка добавления теста ресурсов -->
+        <!-- ТЕСТОВЫЕ КНОПКИ -->
         <button onclick="addTestResources()" style="background: #ff9800; margin-bottom: 10px;">+10 всех ресурсов (Тест)</button>
         <button class="btn-danger" onclick="resetData()">Сбросить прогресс</button>
     </div>
@@ -91,15 +108,14 @@
     const tg = window.Telegram?.WebApp;
     if (tg) tg.expand();
 
-    // Полное состояние игры
     let gameState = {
         registered: false,
         companyName: '',
         primaryResource: 'bricks',
         baseLevel: 1,
-        boss: null, // Имя игрока, который нанял тебя
+        boss: null,
         resources: {
-            money: 50, // Стартовые деньги
+            money: 50,
             bricks: 0,
             food: 0,
             medicine: 0,
@@ -122,9 +138,7 @@
         const saved = localStorage.getItem('my_pvp_idle_game');
         if (saved) {
             gameState = JSON.parse(saved);
-            if (gameState.registered) {
-                showGameScreen();
-            }
+            if (gameState.registered) showGameScreen();
         }
     }
 
@@ -136,10 +150,7 @@
         const nameInput = document.getElementById('company-name').value.trim();
         const resourceSelect = document.getElementById('resource-type').value;
 
-        if (!nameInput) {
-            alert('Введите название компании!');
-            return;
-        }
+        if (!nameInput) return alert('Введите название!');
 
         gameState.companyName = nameInput;
         gameState.primaryResource = resourceSelect;
@@ -156,10 +167,11 @@
         document.getElementById('display-company-name').innerText = gameState.companyName;
         document.getElementById('base-level').innerText = gameState.baseLevel;
         document.getElementById('max-workers').innerText = gameState.baseLevel * 2;
-        document.getElementById('workers-count').innerText = gameState.workers.length;
-        document.getElementById('boss-status').innerText = gameState.boss ? gameState.boss : 'Нет (Свободен)';
+        document.getElementById('boss-status').innerText = gameState.boss ? gameState.boss : 'Свободен';
 
         updateResourcesUI();
+        renderWorkers();
+        startGameLoop();
     }
 
     function updateResourcesUI() {
@@ -169,29 +181,167 @@
         document.getElementById('res-medicine').innerText = gameState.resources.medicine;
         document.getElementById('res-education').innerText = gameState.resources.education;
         document.getElementById('res-communications').innerText = gameState.resources.communications;
+        document.getElementById('workers-count').innerText = gameState.workers.length;
     }
 
-    // Механика обмена 3 к 1
+    // НАЕМ РАБОЧЕГО
+    function hireWorker() {
+        const maxWorkers = gameState.baseLevel * 2;
+        if (gameState.workers.length >= maxWorkers) {
+            return alert(`Достигнут лимит рабочих для уровня базы ${gameState.baseLevel}! Прокачайте базу.`);
+        }
+        if (gameState.resources.money < 50) {
+            return alert('Недостаточно денег! Нужно 50 💰.');
+        }
+
+        gameState.resources.money -= 50;
+        const newWorker = {
+            id: Date.now(),
+            name: `Рабочий #${gameState.workers.length + 1}`,
+            level: 1,
+            hp: 100,
+            maxHp: 100,
+            isProtected: false // Защита медициной
+        };
+
+        gameState.workers.push(newWorker);
+        saveGame();
+        updateResourcesUI();
+        renderWorkers();
+    }
+
+    // ОТРИСОВКА РАБОЧИХ
+    function renderWorkers() {
+        const container = document.getElementById('workers-list');
+        container.innerHTML = '';
+
+        if (gameState.workers.length === 0) {
+            container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px;">У вас пока нет рабочих</p>';
+            return;
+        }
+
+        gameState.workers.forEach(worker => {
+            const upgradeCost = worker.level * 30;
+            const card = document.createElement('div');
+            card.className = 'worker-card';
+            card.innerHTML = `
+                <div class="worker-header">
+                    <span>${worker.name} (Ур. ${worker.level})</span>
+                    <span>${worker.isProtected ? '🛡️ Защищен' : '💔 ' + worker.hp + '/100 HP'}</span>
+                </div>
+                ${!worker.isProtected ? `
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-fill" style="width: ${worker.hp}%;"></div>
+                    </div>
+                ` : '<div style="font-size:11px; color:#4CAF50; margin-bottom:8px;">Не теряет HP и защищен от кражи</div>'}
+                
+                <div class="worker-actions">
+                    ${!worker.isProtected ? `<button class="btn-small btn-action" onclick="feedWorker(${worker.id})">🍞 Покормить (-1 Еда)</button>` : ''}
+                    ${!worker.isProtected ? `<button class="btn-small btn-med" onclick="cureWorker(${worker.id})">🧪 Медицина (-1 Мед)</button>` : ''}
+                    <button class="btn-small" onclick="upgradeWorker(${worker.id})">⬆️ Апгрейд (${upgradeCost} 💰)</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // КОРМЛЕНИЕ И ЛЕЧЕНИЕ
+    function feedWorker(id) {
+        if (gameState.resources.food < 1) return alert('Нет еды!');
+        const w = gameState.workers.find(item => item.id === id);
+        if (w) {
+            gameState.resources.food -= 1;
+            w.hp = Math.min(100, w.hp + 20);
+            saveGame();
+            updateResourcesUI();
+            renderWorkers();
+        }
+    }
+
+    function cureWorker(id) {
+        if (gameState.resources.medicine < 1) return alert('Нет медицины!');
+        const w = gameState.workers.find(item => item.id === id);
+        if (w) {
+            gameState.resources.medicine -= 1;
+            w.isProtected = true;
+            w.hp = 100;
+            saveGame();
+            updateResourcesUI();
+            renderWorkers();
+        }
+    }
+
+    function upgradeWorker(id) {
+        const w = gameState.workers.find(item => item.id === id);
+        if (!w) return;
+        const cost = w.level * 30;
+        if (gameState.resources.money < cost) return alert(`Недостаточно монет! Нужно ${cost} 💰.`);
+
+        gameState.resources.money -= cost;
+        w.level += 1;
+        saveGame();
+        updateResourcesUI();
+        renderWorkers();
+    }
+
+    // ОБМЕН 3 К 1
     function exchangeResource() {
         const resKey = document.getElementById('trade-resource-select').value;
-        
         if (gameState.resources[resKey] >= 3) {
             gameState.resources[resKey] -= 3;
             gameState.resources.money += 1;
             saveGame();
             updateResourcesUI();
         } else {
-            alert(`Недостаточно ресурса! Нужно минимум 3 ед. ${resNames[resKey]}`);
+            alert(`Нужно минимум 3 ед. ${resNames[resKey]}`);
         }
     }
 
-    // ТЕСТ: Добавить ресурсы для проверки
+    // ИГРОВОЙ ЦИКЛ (ТАЙМЕРЫ)
+    let gameLoopStarted = false;
+    function startGameLoop() {
+        if (gameLoopStarted) return;
+        gameLoopStarted = true;
+
+        // Каждые 5 секунд: добыча ресурсов рабочими
+        setInterval(() => {
+            if (gameState.workers.length > 0) {
+                let income = 0;
+                gameState.workers.forEach(w => income += w.level);
+                gameState.resources[gameState.primaryResource] += income;
+                saveGame();
+                updateResourcesUI();
+            }
+        }, 5000);
+
+        // Каждую 1 минуту (60000 мс): списание -1 HP у незащищенных рабочих
+        setInterval(() => {
+            let changed = false;
+            gameState.workers.forEach((w, index) => {
+                if (!w.isProtected) {
+                    w.hp -= 1;
+                    changed = true;
+                    if (w.hp <= 0) {
+                        alert(`${w.name} погиб от истощения!`);
+                        gameState.workers.splice(index, 1);
+                    }
+                }
+            });
+            if (changed) {
+                saveGame();
+                updateResourcesUI();
+                renderWorkers();
+            }
+        }, 60000);
+    }
+
     function addTestResources() {
         gameState.resources.bricks += 10;
         gameState.resources.food += 10;
         gameState.resources.medicine += 10;
         gameState.resources.education += 10;
         gameState.resources.communications += 10;
+        gameState.resources.money += 50;
         saveGame();
         updateResourcesUI();
     }
